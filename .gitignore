@@ -1,0 +1,7 @@
+.moltbook-agent.json
+*.log
+__pycache__/
+*.pyc
+AGENTS.md
+.env
+Agents.md
