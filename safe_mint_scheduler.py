@@ -74,9 +74,16 @@ def platform_min_interval_minutes(created_at: str) -> int:
     return 120 if age.total_seconds() < 24 * 3600 else 30
 
 
-def mint_content(tick: str, amt: str) -> str:
+def build_nonce() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+
+
+def mint_content(tick: str, amt: str, add_nonce: bool = True) -> str:
     payload = {"p": "mbc-20", "op": "mint", "tick": tick, "amt": amt}
-    return f"{json.dumps(payload, separators=(',', ':'))}{MBC_LINK}"
+    base = f"{json.dumps(payload, separators=(',', ':'))} {MBC_LINK}"
+    if not add_nonce:
+        return base
+    return f"{base}\n\nnonce:{build_nonce()}"
 
 
 def submit_verification_if_needed(api_key: str, post_resp: dict[str, Any]) -> bool:
@@ -111,7 +118,9 @@ def submit_verification_if_needed(api_key: str, post_resp: dict[str, Any]) -> bo
     return False
 
 
-def post_once(api_key: str, submolt: str, title: str, tick: str, amt: str) -> bool:
+def post_once(
+    api_key: str, submolt: str, title: str, tick: str, amt: str, add_nonce: bool
+) -> bool:
     status, data = api_request(
         "POST",
         "/posts",
@@ -119,7 +128,7 @@ def post_once(api_key: str, submolt: str, title: str, tick: str, amt: str) -> bo
         {
             "submolt": submolt,
             "title": title,
-            "content": mint_content(tick, amt),
+            "content": mint_content(tick, amt, add_nonce=add_nonce),
         },
     )
 
@@ -179,6 +188,7 @@ def run_scheduler(args: argparse.Namespace) -> int:
             title=title,
             tick=args.tick,
             amt=str(args.amt),
+            add_nonce=not args.no_nonce,
         )
         if ok:
             sent += 1
@@ -215,6 +225,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--credentials",
         default=str(CREDENTIALS_PATH),
         help="path to moltbook credentials json",
+    )
+    parser.add_argument(
+        "--no-nonce",
+        action="store_true",
+        help="disable default nonce suffix in content (not recommended)",
     )
     return parser
 

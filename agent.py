@@ -77,7 +77,7 @@ def post_json(url: str, headers: dict[str, str], payload: dict) -> tuple[int, st
 
 def build_mint_post(tick: str, amt: str) -> str:
     payload = {"p": "mbc-20", "op": "mint", "tick": tick, "amt": amt}
-    return f"{json.dumps(payload, separators=(',', ':'))}\n\n{MBC_LINK}"
+    return f"{json.dumps(payload, separators=(',', ':'))}{MBC_LINK}"
 
 
 def cmd_bind(args: argparse.Namespace) -> int:
